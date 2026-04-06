@@ -1,0 +1,14 @@
+{
+  "agents": {
+    "nova": {
+      "token": "YOUR_BOT_TOKEN_HERE",
+      "transcript_dir": "~/.claude/projects/-Users-you-agents-nova"
+    },
+    "sable": {
+      "token": "YOUR_BOT_TOKEN_HERE",
+      "transcript_dir": "~/.claude/projects/-Users-you-agents-sable"
+    }
+  },
+  "typing_interval": 4,
+  "stale_timeout": 90
+}
