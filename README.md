@@ -38,14 +38,22 @@ Copy `config.example.json` to `config.json` and fill in your agents:
 
 **Finding your transcript directory:** Claude Code stores transcripts in `~/.claude/projects/` using a path-encoded directory name. If your agent runs from `/Users/you/agents/bot`, the transcript dir is `~/.claude/projects/-Users-you-agents-bot`.
 
-### 2. Install as a launchd service (macOS)
+### 2. Install
 
 ```bash
-chmod +x install.sh
+chmod +x install.sh uninstall.sh
 ./install.sh config.json
 ```
 
-This creates a LaunchAgent that starts on login, restarts on crash, and runs independently of any Claude session.
+The installer auto-detects your platform:
+
+| Platform | Service type | Auto-starts on login | Auto-restarts on crash |
+|----------|-------------|---------------------|----------------------|
+| macOS | launchd LaunchAgent | Yes | Yes |
+| Linux | systemd user service | Yes | Yes |
+| Windows | Manual / Task Scheduler | See below | — |
+
+**Windows:** Run via WSL, or manually with `python3 typing-daemon.py --config config.json`. For startup, add to Task Scheduler.
 
 ### 3. Test it
 
@@ -56,6 +64,8 @@ Message your bot on Telegram. You should see "typing..." appear within a few sec
 ```bash
 ./uninstall.sh
 ```
+
+Works on macOS and Linux — removes the service cleanly.
 
 ## Manual usage
 
@@ -101,8 +111,8 @@ Add one entry per agent. Each agent needs its own bot token (created via [@BotFa
 
 ## Requirements
 
-- Python 3.8+
-- macOS (for launchd install) or any OS for manual usage
+- Python 3.8+ (no pip dependencies)
+- macOS, Linux, or Windows (WSL)
 - Claude Code with the Telegram plugin (`--channels plugin:telegram@claude-plugins-official`)
 
 ## License
