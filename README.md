@@ -51,9 +51,12 @@ The installer auto-detects your platform:
 |----------|-------------|---------------------|----------------------|
 | macOS | launchd LaunchAgent | Yes | Yes |
 | Linux | systemd user service | Yes | Yes |
-| Windows | Manual / Task Scheduler | See below | — |
+| Windows | Task Scheduler | Yes | Yes |
 
-**Windows:** Run via WSL, or manually with `python3 typing-daemon.py --config config.json`. For startup, add to Task Scheduler.
+**Windows:** Use the PowerShell installer instead:
+```powershell
+powershell -ExecutionPolicy Bypass -File install.ps1 -Config config.json
+```
 
 ### 3. Test it
 

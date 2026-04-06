@@ -130,11 +130,8 @@ case "$(uname -s)" in
         fi
         ;;
     MINGW*|MSYS*|CYGWIN*)
-        echo "On Windows, run via WSL or manually:"
-        echo "  python3 $DAEMON --config $CONFIG"
-        echo ""
-        echo "To run at startup, add to Task Scheduler or create a .bat file:"
-        echo "  pythonw $DAEMON --config $CONFIG"
+        echo "On Windows, use the PowerShell installer instead:"
+        echo "  powershell -ExecutionPolicy Bypass -File install.ps1 -Config config.json"
         exit 0
         ;;
     *)
