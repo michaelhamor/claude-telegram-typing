@@ -1,0 +1,155 @@
+name: Test install/uninstall
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Python
+        run: python3 --version
+
+      - name: Create test config
+        run: |
+          cat > config.json << 'EOF'
+          {
+            "agents": {
+              "test-agent": {
+                "token": "000000:fake-token-for-ci",
+                "transcript_dir": "/tmp/fake-transcripts"
+              }
+            },
+            "typing_interval": 4,
+            "stale_timeout": 90
+          }
+          EOF
+          mkdir -p /tmp/fake-transcripts
+
+      - name: Validate daemon starts
+        run: |
+          python3 typing-daemon.py --config config.json &
+          PID=$!
+          sleep 3
+          kill -0 $PID 2>/dev/null && echo "Daemon running (PID $PID)" || (echo "Daemon failed to start" && exit 1)
+          kill $PID
+
+      - name: Install via launchd
+        run: |
+          chmod +x install.sh uninstall.sh
+          ./install.sh config.json
+
+      - name: Verify launchd service
+        run: |
+          sleep 2
+          launchctl list | grep claude.typing && echo "Service registered" || (echo "Service not found" && exit 1)
+
+      - name: Uninstall
+        run: |
+          ./uninstall.sh
+          ! launchctl list 2>/dev/null | grep claude.typing && echo "Service removed" || (echo "Service still present" && exit 1)
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Python
+        run: python3 --version
+
+      - name: Create test config
+        run: |
+          cat > config.json << 'EOF'
+          {
+            "agents": {
+              "test-agent": {
+                "token": "000000:fake-token-for-ci",
+                "transcript_dir": "/tmp/fake-transcripts"
+              }
+            },
+            "typing_interval": 4,
+            "stale_timeout": 90
+          }
+          EOF
+          mkdir -p /tmp/fake-transcripts
+
+      - name: Validate daemon starts
+        run: |
+          python3 typing-daemon.py --config config.json &
+          PID=$!
+          sleep 3
+          kill -0 $PID 2>/dev/null && echo "Daemon running (PID $PID)" || (echo "Daemon failed to start" && exit 1)
+          kill $PID
+
+      - name: Install via systemd
+        run: |
+          chmod +x install.sh uninstall.sh
+          ./install.sh config.json
+
+      - name: Verify systemd service
+        run: |
+          sleep 2
+          systemctl --user is-active claude-typing-daemon && echo "Service active" || (echo "Service not active" && exit 1)
+
+      - name: Uninstall
+        run: |
+          ./uninstall.sh
+          ! systemctl --user is-active claude-typing-daemon 2>/dev/null && echo "Service removed" || (echo "Service still active" && exit 1)
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Python
+        run: python --version
+
+      - name: Create test config
+        shell: pwsh
+        run: |
+          @'
+          {
+            "agents": {
+              "test-agent": {
+                "token": "000000:fake-token-for-ci",
+                "transcript_dir": "C:\\temp\\fake-transcripts"
+              }
+            },
+            "typing_interval": 4,
+            "stale_timeout": 90
+          }
+          '@ | Out-File -Encoding utf8 config.json
+          New-Item -ItemType Directory -Force -Path C:\temp\fake-transcripts | Out-Null
+
+      - name: Validate daemon starts
+        shell: pwsh
+        run: |
+          $proc = Start-Process python -ArgumentList "typing-daemon.py","--config","config.json" -PassThru -NoNewWindow
+          Start-Sleep -Seconds 3
+          if ($proc.HasExited) { Write-Error "Daemon failed to start"; exit 1 }
+          Write-Host "Daemon running (PID $($proc.Id))"
+          Stop-Process -Id $proc.Id
+
+      - name: Install via Task Scheduler
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File install.ps1 -Config config.json
+
+      - name: Verify scheduled task
+        shell: pwsh
+        run: |
+          Start-Sleep -Seconds 2
+          $task = Get-ScheduledTask -TaskName "ClaudeTypingDaemon" -ErrorAction SilentlyContinue
+          if ($task) { Write-Host "Task registered: $($task.State)" } else { Write-Error "Task not found"; exit 1 }
+
+      - name: Uninstall
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File uninstall.ps1
+          $task = Get-ScheduledTask -TaskName "ClaudeTypingDaemon" -ErrorAction SilentlyContinue
+          if ($task) { Write-Error "Task still exists"; exit 1 } else { Write-Host "Task removed" }
