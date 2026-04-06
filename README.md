@@ -4,7 +4,7 @@ Typing indicator daemon for Claude Code's Telegram plugin. Shows "typing..." in 
 
 ## The Problem
 
-When you message a Claude Code agent via Telegram, there's no feedback that it's working on your request. The chat looks idle until the reply arrives — which can take seconds to minutes depending on the task.
+When you message a Claude Code agent via Telegram, the "typing..." indicator appears briefly and then disappears — even though the agent is still processing your request. Telegram's typing action expires after 5 seconds, and Claude Code doesn't refresh it. For tasks that take seconds to minutes, the chat looks idle until the reply arrives.
 
 ## The Solution
 
