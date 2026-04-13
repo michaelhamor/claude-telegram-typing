@@ -132,6 +132,17 @@ class AgentWatcher:
                         if "telegram" in tool_name and "reply" in tool_name:
                             logger.debug(f"[{self.name}] Reply detected — stopping typing")
                             self.typing_chat_id = None
+                        elif self.typing_chat_id:
+                            # Agent is still working (tool call) — keep typing alive
+                            self.typing_since = time.time()
+                            logger.debug(f"[{self.name}] Activity detected ({tool_name}) — extending typing")
+                    elif block.get("type") == "text" and self.typing_chat_id:
+                        # Agent is generating text — still working
+                        self.typing_since = time.time()
+
+        elif entry_type == "tool_result" and self.typing_chat_id:
+            # Tool result came back — agent is still processing
+            self.typing_since = time.time()
 
     def _check_channel_message(self, text: str):
         match = re.search(
